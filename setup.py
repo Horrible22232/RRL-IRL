@@ -6,7 +6,6 @@ import neroRRL
 
 # Get current working directory
 cwd = os.getcwd()
-
 # Get install requirements from requirements.txt
 install_requires = None
 with open(cwd + "/requirements.txt") as file:
@@ -14,12 +13,10 @@ with open(cwd + "/requirements.txt") as file:
 
 # Get long description from README.md
 long_description = ""
-with open(cwd + "/README.md", "r", encoding="utf-8") as fh:
-    long_description = fh.read()
 
 # Set up package
 setup(
-    name="neroRL",
+    name="neroRRL",
     version=neroRRL.__version__,
     description="A library for Deep Reinforcement Learning (PPO) in PyTorch",
     long_description=long_description,
