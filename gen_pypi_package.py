@@ -20,13 +20,13 @@ setup_files = ["setup.py", "LICENSE", "README.md", "requirements.txt", "MANIFEST
 
 # Build the package directories
 for folder in pypi_folders:
-    copy_tree(folder, dst="tmp\\neroRL\\" + folder)
+    copy_tree(folder, dst="tmp\\neroRRL\\" + folder)
 
 for file in setup_files:
     shutil.copy(file, "tmp")
 
 # Deletes all pycache folders
-for dname, dirs, files in os.walk("tmp\\neroRL"):
+for dname, dirs, files in os.walk("tmp\\neroRRL"):
     if "__pycache__" in dname:
         shutil.rmtree(dname)
 

@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 import os
 import sys
 sys.path.insert(0, os.getcwd())
-import neroRL
+import neroRRL
 
 # Get current working directory
 cwd = os.getcwd()
@@ -20,24 +20,24 @@ with open(cwd + "/README.md", "r", encoding="utf-8") as fh:
 # Set up package
 setup(
     name="neroRL",
-    version=neroRL.__version__,
+    version=neroRRL.__version__,
     description="A library for Deep Reinforcement Learning (PPO) in PyTorch",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/MarcoMeter/neroRL",
-    keywords = ["Deep Reinforcement Learning", "PyTorch", "Proximal Policy Optimization", "PPO", "Recurrent", "Recurrence", "LSTM", "GRU"],
+    url="https://github.com/Horrible22232/RRL-IRL",
+    keywords = ["Deep Reincarnation Reinforcement Learning", "PyTorch", "Proximal Policy Optimization", "PPO", "Recurrent", "Recurrence", "LSTM", "GRU"],
     project_urls={
-        "Github": "https://github.com/MarcoMeter/neroRL",
-        "Bug Tracker": "https://github.com/MarcoMeter/neroRL/issues"
+        "Github": "https://github.com/Horrible22232/RRL-IRL",
+        "Bug Tracker": "https://github.com/Horrible22232/RRL-IRL/issues"
     },
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
-    author="Marco Pleines",
+    author="Matthias Pallasch",
     package_dir={'': '.'},
-    packages=find_packages(where='.', include="neroRL*"),
+    packages=find_packages(where='.', include="neroRRL*"),
     include_package_data=True,
     install_requires=install_requires,
     extras_require={
@@ -54,12 +54,11 @@ setup(
     },
     entry_points={
         "console_scripts": [
-            "ntrain=neroRL.train:main",
-            "nenjoy=neroRL.enjoy:main",
-            "neval=neroRL.eval:main",
-            "ntune=neroRL.tune:main",
-            "noptuna=neroRL.optuna:main",
-            "neval-checkpoints=neroRL.eval_checkpoints:main"
+            "nrtrain=neroRRL.train:main",
+            "nrenjoy=neroRRL.enjoy:main",
+            "nreval=neroRRL.eval:main",
+            "nroptuna=neroRRL.optuna:main",
+            "nreval-checkpoints=neroRRL.eval_checkpoints:main"
         ],
     },
 )
