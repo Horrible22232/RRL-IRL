@@ -2,7 +2,7 @@ import io
 import json
 import re
 
-from . import path
+from pathlib import Path
 
 
 class Config(dict):
@@ -26,7 +26,7 @@ class Config(dict):
     return self._flat.copy()
 
   def save(self, filename):
-    filename = path.Path(filename)
+    filename = Path(filename)
     if filename.suffix == '.json':
       filename.write(json.dumps(dict(self)))
     elif filename.suffix in ('.yml', '.yaml'):
@@ -39,7 +39,7 @@ class Config(dict):
 
   @classmethod
   def load(cls, filename):
-    filename = path.Path(filename)
+    filename = Path(filename)
     if filename.suffix == '.json':
       return cls(json.loads(filename.read_text()))
     elif filename.suffix in ('.yml', '.yaml'):
