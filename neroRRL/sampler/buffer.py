@@ -40,7 +40,7 @@ class Buffer():
             self.vec_obs = None
         self.rewards = np.zeros((self.num_workers, self.worker_steps), dtype=np.float32)
         self.actions = torch.zeros((self.num_workers, self.worker_steps, len(self.action_space_shape)), dtype=torch.long)
-        self.dones = np.zeros((self.num_workers, self.worker_steps), dtype=np.bool)
+        self.dones = np.zeros((self.num_workers, self.worker_steps), dtype=bool)
         self.log_probs = torch.zeros((self.num_workers, self.worker_steps, len(self.action_space_shape)))
         self.values = torch.zeros((self.num_workers, self.worker_steps))
         self.advantages = torch.zeros((self.num_workers, self.worker_steps))
