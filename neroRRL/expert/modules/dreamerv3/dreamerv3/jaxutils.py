@@ -6,7 +6,7 @@ import numpy as np
 import optax
 from tensorflow_probability.substrates import jax as tfp
 
-from . import ninjax as nj
+from neroRRL.expert.modules.dreamerv3 import ninjax as nj
 
 tfd = tfp.distributions
 tree_map = jax.tree_util.tree_map

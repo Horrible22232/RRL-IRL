@@ -1,4 +1,4 @@
-import embodied
+from neroRRL.expert.modules.dreamerv3 import embodied
 import jax
 import jax.numpy as jnp
 import ruamel.yaml as yaml
@@ -12,11 +12,11 @@ class CheckTypesFilter(logging.Filter):
     return 'check_types' not in record.getMessage()
 logger.addFilter(CheckTypesFilter())
 
-from . import behaviors
-from . import jaxagent
-from . import jaxutils
-from . import nets
-from . import ninjax as nj
+from neroRRL.expert.modules.dreamerv3 import behaviors
+from neroRRL.expert.modules.dreamerv3 import jaxagent
+from neroRRL.expert.modules.dreamerv3 import jaxutils
+from neroRRL.expert.modules.dreamerv3 import nets
+from neroRRL.expert.modules.dreamerv3 import ninjax as nj
 
 
 @jaxagent.Wrapper

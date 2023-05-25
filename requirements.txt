@@ -16,3 +16,11 @@ scipy
 tensorboard
 tblib
 gdown
+cloudpickle
+crafter
+jax
+jaxlib
+optax
+rich
+tensorflow-cpu
+tensorflow_probability

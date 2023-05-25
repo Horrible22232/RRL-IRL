@@ -5,8 +5,8 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 
-from . import jaxutils
-from . import ninjax as nj
+from neroRRL.expert.modules.dreamerv3 import jaxutils
+from neroRRL.expert.modules.dreamerv3 import ninjax as nj
 
 tree_map = jax.tree_util.tree_map
 tree_flatten = jax.tree_util.tree_flatten

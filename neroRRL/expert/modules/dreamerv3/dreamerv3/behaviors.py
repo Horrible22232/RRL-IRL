@@ -2,10 +2,10 @@ import jax.numpy as jnp
 from tensorflow_probability.substrates import jax as tfp
 tfd = tfp.distributions
 
-from . import agent
-from . import expl
-from . import ninjax as nj
-from . import jaxutils
+from neroRRL.expert.modules.dreamerv3 import agent
+from neroRRL.expert.modules.dreamerv3 import expl
+from neroRRL.expert.modules.dreamerv3 import ninjax as nj
+from neroRRL.expert.modules.dreamerv3 import jaxutils
 
 
 class Greedy(nj.Module):

@@ -3,9 +3,9 @@ import jax.numpy as jnp
 tree_map = jax.tree_util.tree_map
 sg = lambda x: tree_map(jax.lax.stop_gradient, x)
 
-from . import nets
-from . import jaxutils
-from . import ninjax as nj
+from neroRRL.expert.modules.dreamerv3 import nets
+from neroRRL.expert.modules.dreamerv3 import jaxutils
+from neroRRL.expert.modules.dreamerv3 import ninjax as nj
 
 
 class Disag(nj.Module):
