@@ -59,11 +59,11 @@ class JAXAgent(embodied.Agent):
       state = tree_map(
           np.asarray, state, is_leaf=lambda x: isinstance(x, list))
       state = self._convert_inps(state, self.policy_devices)
-    (outs, state), _ = self._policy(varibs, rng, obs, state, mode=mode)
+    (outs, state, task_outs), _ = self._policy(varibs, rng, obs, state, mode=mode)
     outs = self._convert_outs(outs, self.policy_devices)
     # TODO: Consider keeping policy states in accelerator memory.
     state = self._convert_outs(state, self.policy_devices)
-    return outs, state
+    return outs, state, task_outs
 
   def train(self, data, state=None):
     rng = self._next_rngs(self.train_devices)

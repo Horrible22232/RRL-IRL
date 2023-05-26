@@ -59,8 +59,8 @@ class Agent(nj.Module):
     task_outs, task_state = self.task_behavior.policy(latent, task_state)
     expl_outs, expl_state = self.expl_behavior.policy(latent, expl_state)
     if mode == 'eval':
-      outs = task_outs
-      outs['action'] = outs['action'].sample(seed=nj.rng())
+      outs = {}
+      outs['action'] = task_outs['action'].sample(seed=nj.rng())
       outs['log_entropy'] = jnp.zeros(outs['action'].shape[:1])
     elif mode == 'explore':
       outs = expl_outs
@@ -71,7 +71,7 @@ class Agent(nj.Module):
       outs['log_entropy'] = outs['action'].entropy()
       outs['action'] = outs['action'].sample(seed=nj.rng())
     state = ((latent, outs['action']), task_state, expl_state)
-    return outs, state
+    return outs, state, task_outs
 
   def train(self, data, state):
     self.config.jax.jit and print('Tracing train function.')
