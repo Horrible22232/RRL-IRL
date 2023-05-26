@@ -50,7 +50,7 @@ class DreamerV3Wrapper:
             {OneHotCategorical} -- The action distribution
             {dict} -- The state
         """
-        action, state, task_outs = self.agent.policy(obs, state, mode='eval')
+        _, state, task_outs = self.agent.policy(obs, state, mode='eval')
         
         # Get the logits from the task outputs
         action_logits = task_outs['action'].logits.tolist()
@@ -58,7 +58,7 @@ class DreamerV3Wrapper:
         logits = torch.tensor(action_logits)
         # Create an equivalent PyTorch Categorical distribution
         policy = OneHotCategorical(logits=logits)
-        return policy, state, action
+        return policy, state
         
     def __call__(self, obs, state):
         """Calls the forward pass of the model."""
@@ -85,9 +85,10 @@ done, rewards, iter = False, [], 0
 while not done:
     obs = env.step(act)
     obs = {k: v[None] if isinstance(v, (list, dict)) else np.array([v]) for k, v in obs.items()}
-    policy, state, act = agent(obs, state)
+    policy, state = agent(obs, state)
     
-    act = {'action': act["action"][0], 'reset': obs['is_last'][0]}
+    act = {'action': policy.sample().numpy()[0], 'reset': obs['is_last'][0]}
+    
     # Log result
     # clear_output()
     # time.sleep(0.5)
