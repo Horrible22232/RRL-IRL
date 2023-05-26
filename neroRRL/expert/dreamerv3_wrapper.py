@@ -44,7 +44,7 @@ class DreamerV3Wrapper:
 
         Arguments:
             obs {dict} -- The observation
-            state (_type_): _description_
+            state {tuple} -- The state
 
         Returns:
             {OneHotCategorical} -- The action distribution
