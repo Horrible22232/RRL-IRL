@@ -40,7 +40,7 @@ class DreamerV3Wrapper:
     
     
     def forward(self, obs, state):
-        """ The forward pass of the model.
+        """ The forward pass of the dreamerv3 model.
 
         Arguments:
             obs {dict} -- The observation
