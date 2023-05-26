@@ -27,19 +27,19 @@ class DreamerV3Wrapper:
         """
         # Convert to Path objects
         model_path = Path(model_path)
-        
-        # Load the config and model
+        # Set the device
         if device == "cpu":
             config = config.update({"jax.platform" : "cpu"})
-        
+        if device == "cuda":
+            config = config.update({"jax.platform" : "gpu"})
+        # Create the agent
         step = embodied.Counter()
         agent = dreamerv3.Agent(observation_space, action_space, step, config)
-        
+        # Create the checkpoint to load the model
         checkpoint = Checkpoint()
         checkpoint.agent = agent
-        
         checkpoint.load(model_path, keys=['agent'])
-        
+        # Set the final loaded agent
         self.agent = agent
     
     
@@ -54,16 +54,16 @@ class DreamerV3Wrapper:
             {OneHotCategorical} -- The action distribution
             {dict} -- The state
         """
+        # Get the task outputs from the agent
         _, state, task_outs = self.agent.policy(obs, state, mode='eval')
-        
-        # Get the logits from the task outputs
+        # Get the logits from the task outputs and move them to the cpu
         action_logits = jax.device_get(task_outs['action'].logits)
         action_logits = action_logits.tolist()
-        # Move the distribution to CPU
+        # Convert the logits to a tensor
         logits = torch.tensor(action_logits)
         # Create an equivalent PyTorch Categorical distribution
         policy = OneHotCategorical(logits=logits)
-        
+        # Return the policy and state
         return policy, state
         
     def __call__(self, obs, state):
