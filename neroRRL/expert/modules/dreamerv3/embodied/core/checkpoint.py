@@ -3,6 +3,7 @@ import time
 
 from . import basics
 from pathlib import Path
+import pickle
 
 
 class Checkpoint:
@@ -72,7 +73,7 @@ class Checkpoint:
     assert self._filename or filename
     filename = Path(filename or self._filename)
     self._log and print(f'Loading checkpoint: {filename}')
-    with model_path.open('rb') as f:
+    with filename.open('rb') as f:
       data = pickle.load(f)
     keys = tuple(data.keys() if keys is None else keys)
     for key in keys:
