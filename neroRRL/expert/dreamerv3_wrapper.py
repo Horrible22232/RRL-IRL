@@ -15,8 +15,7 @@ class DreamerV3Wrapper:
     """Converts the DreamerV3 model to a PyTorch model."""
     
     def __init__(self, config, model_path, observation_space, action_space, device):    
-        """
-        Loads the DreamerV3 model and config from the given paths.
+        """Loads the DreamerV3 model and config from the given paths.
         
         Arguments:
             config {dict} -- The dreamerv3 config
@@ -44,7 +43,7 @@ class DreamerV3Wrapper:
     
     
     def forward(self, obs, state):
-        """ The forward pass of the dreamerv3 model.
+        """The forward pass of the dreamerv3 model.
 
         Arguments:
             obs {dict} -- The observation
