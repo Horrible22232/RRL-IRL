@@ -6,6 +6,7 @@ import numpy as np
 import crafter
 from pathlib import Path
 import torch
+import jax
 import torch.nn.functional as F
 import tensorflow as tf
 from torch.distributions import OneHotCategorical
@@ -56,7 +57,8 @@ class DreamerV3Wrapper:
         _, state, task_outs = self.agent.policy(obs, state, mode='eval')
         
         # Get the logits from the task outputs
-        action_logits = task_outs['action'].logits.tolist()
+        action_logits = jax.device_get(task_outs['action'].logits)
+        action_logits = action_logits.tolist()
         # Move the distribution to CPU
         logits = torch.tensor(action_logits)
         # Create an equivalent PyTorch Categorical distribution
@@ -73,15 +75,13 @@ base_path = "./model/expert/crafter/"
 config_path = Path(base_path + 'config.yaml')
 model_path = Path(base_path + 'checkpoint.ckpt')
 
-
 config = embodied.Config.load(config_path)
-config = config.update({"jax.platform" : "cpu"})
 
 env = crafter.Env() 
 env = from_gym.FromGym(env)
 env = dreamerv3.wrap_env(env, config)
 
-agent = DreamerV3Wrapper(config, model_path, env.obs_space, env.act_space, "cpu")
+agent = DreamerV3Wrapper(config, model_path, env.obs_space, env.act_space, "cuda")
 
 state = None
 act = {'action': env.act_space['action'].sample(), 'reset': np.array(True)}
