@@ -18,8 +18,11 @@ class DreamerV3Wrapper:
         Loads the DreamerV3 model and config from the given paths.
         
         Arguments:
-            config_path {str} -- _description_
-            model_path {str} _description_
+            config {dict} -- The dreamerv3 config
+            model_path {str} -- The path to the model
+            observation_space {box} -- The observation space
+            action_space {tuple} -- The action space
+            device {str} -- The device to run the model on
         """
         # Convert to Path objects
         model_path = Path(model_path)
