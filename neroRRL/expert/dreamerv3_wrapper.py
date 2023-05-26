@@ -58,6 +58,7 @@ class DreamerV3Wrapper:
         logits = torch.tensor(action_logits)
         # Create an equivalent PyTorch Categorical distribution
         policy = OneHotCategorical(logits=logits)
+        
         return policy, state
         
     def __call__(self, obs, state):
