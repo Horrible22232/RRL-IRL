@@ -29,7 +29,7 @@ class DreamerV3Wrapper:
         # Set the device
         if device == "cpu":
             config = config.update({"jax.platform" : "cpu"})
-        if device == "cuda":
+        elif device == "cuda":
             config = config.update({"jax.platform" : "gpu"})
         # Create the agent
         step = embodied.Counter()
