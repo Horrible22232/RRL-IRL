@@ -1,7 +1,5 @@
-import gymnasium as gym
-import os
-os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "hide"
 import crafter
+import numpy as np
 
 from pathlib import Path
 from random import randint
@@ -54,12 +52,12 @@ class CrafterWrapper(Env):
         self._vector_observation_space = None
         
     @property
-    def has_expert(self):
+    def _has_expert(self):
         """Returns whether the environment has an expert."""
         return self._expert is not None
     
     @property
-    def expert_policy(self):
+    def _expert_policy(self):
         """Returns the expert policy."""
         return self._expert
         
@@ -96,10 +94,7 @@ class CrafterWrapper(Env):
     @property
     def action_names(self):
         """Returns a list of action names. It has to be noted that only the names of action branches are provided and not the actions themselves!"""
-        if isinstance(self.action_space, spaces.MultiDiscrete):
-            return [["no-op", "left", "right"], ["no-op", "up", "down"]]
-        else:
-            return [["no-op", "rotate left", "rotate right", "move forward"]]
+        return [["no-op", "rotate left", "rotate right", "move forward"]]
 
     @property
     def get_episode_trajectory(self):
@@ -133,25 +128,27 @@ class CrafterWrapper(Env):
         options.pop("seed", None)
 
         # Reset the environment to retrieve the initial observation
-        obs, _ = self._env.reset(seed=self._seed, options=options)
-        if type(self._env.observation_space) is spaces.Dict:
-            vis_obs = obs["visual_observation"]
-            vec_obs = obs["vector_observation"]
-        else:
-            vis_obs = obs
-            vec_obs = None
-
+        act = {'action': self._env.act_space['action'].sample(), 'reset': np.array(True)}
+        env_data = self._env.step(act)
+        
+        vis_obs = env_data['image'] / 255.0
+        
+        # Track rewards of an entire episode
+        self._rewards = []
+        
+        if self._has_expert:
+            self._forward_expert(obs)
 
         if self._realtime_mode:
             self._env.render()
 
         # Prepare trajectory recording
         self._trajectory = {
-            "vis_obs": [self._env.render()], "vec_obs": [vec_obs],
+            "vis_obs": [self._env.render()], "vec_obs": [None],
             "rewards": [0.0], "actions": []
         } if self._record else None
 
-        return vis_obs, vec_obs
+        return vis_obs, None
 
     def step(self, action):
         """Runs one timestep of the environment's dynamics.
@@ -166,28 +163,33 @@ class CrafterWrapper(Env):
             {bool} -- Whether the episode of the environment terminated
             {dict} -- Further episode information (e.g. cumulated reward) retrieved from the environment once an episode completed
         """
-        if isinstance(action, int):
-            action = [action]
-        obs, reward, done, truncation, info = self._env.step(action)
-
-        if type(self._env.observation_space) is spaces.Dict:
-            vis_obs = obs["visual_observation"]
-            vec_obs = obs["vector_observation"]
-        else:
-            vis_obs = obs
-            vec_obs = None
+            
+        act = {'action': action, 'reset': np.array(False)}
+        env_data = self._env.step(act)
+        
+        vis_obs, reward, done, info = env_data['image'] / 255.0, env_data['reward'], env_data['is_last'], {}
+        
+        # Track rewards of an entire episode
+        self._rewards.append(reward)
 
         if self._realtime_mode or self._record:
-            img = self._env.render()
+            img = env_data['image']
+            
+        # Wrap up episode information once completed (i.e. done)
+        if done or truncation:
+            info = {"reward": sum(self._rewards),
+                    "length": len(self._rewards)}
+        else:
+            info = None
 
         # Record trajectory data
         if self._record:
-            self._trajectory["vis_obs"].append(img)
-            self._trajectory["vec_obs"].append(vec_obs)
+            self._trajectory["vis_obs"].append(env_data['image'])
+            self._trajectory["vec_obs"].append(None)
             self._trajectory["rewards"].append(reward)
-            self._trajectory["actions"].append(action)
+            self._trajectory["actions"].append([action])
 
-        return vis_obs, vec_obs, reward, done, info
+        return vis_obs, None, reward, done, info
 
     def close(self):
         """Shuts down the environment."""

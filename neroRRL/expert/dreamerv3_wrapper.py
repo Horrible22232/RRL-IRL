@@ -83,13 +83,15 @@ env = crafter.Env()
 env = from_gym.FromGym(env)
 env = dreamerv3.wrap_env(env, config)
 
-agent = DreamerV3Wrapper(config, model_path, env.obs_space, env.act_space, "cuda")
+# agent = DreamerV3Wrapper(config_path, model_path, env.obs_space, env.act_space, torch.device("cuda"))
 
 state = None
 act = {'action': env.act_space['action'].sample(), 'reset': np.array(True)}
 done, rewards, iter = False, [], 0
 while not done:
     obs = env.step(act)
+    print(obs.keys())
+    assert(False)
     obs = {k: v[None] if isinstance(v, (list, dict)) else np.array([v]) for k, v in obs.items()}
     policy, state = agent(obs, state)
     
