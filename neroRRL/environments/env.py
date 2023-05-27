@@ -62,3 +62,17 @@ class Env(ABC):
     def close(self):
         """Shuts down the environment."""
         raise NotImplementedError("This abstract method has to be implemented by a child.")
+    
+    @property
+    def has_expert(self):
+        """Returns whether the environment has an expert."""
+        return False
+    
+    @property
+    def expert_policy(self):
+        """Returns the expert policy."""
+        return None
+    
+    def generate_expert_reward(self, policy, expert_policy):
+        """Generates an expert reward for the given state and action."""
+        return 0

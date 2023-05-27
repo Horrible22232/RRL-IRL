@@ -14,22 +14,25 @@ from torch.distributions import OneHotCategorical
 class DreamerV3Wrapper:
     """Converts the DreamerV3 model to a PyTorch model."""
     
-    def __init__(self, config, model_path, observation_space, action_space, device):    
+    def __init__(self, config_path, model_path, observation_space, action_space, device):    
         """Loads the DreamerV3 model and config from the given paths.
         
         Arguments:
-            config {dict} -- The dreamerv3 config
+            config_path {str} -- The config path to the model
             model_path {str} -- The path to the model
             observation_space {box} -- The observation space
             action_space {tuple} -- The action space
             device {str} -- The device to run the model on
         """
         # Convert to Path objects
+        config_path = Path(config_path)
         model_path = Path(model_path)
+        # Load the config
+        config = embodied.Config.load(config_path)
         # Set the device
-        if device == "cpu":
+        if device.type == "cpu":
             config = config.update({"jax.platform" : "cpu"})
-        elif device == "cuda":
+        elif device.type == "cuda":
             config = config.update({"jax.platform" : "gpu"})
         # Create the agent
         step = embodied.Counter()

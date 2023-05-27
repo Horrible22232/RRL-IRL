@@ -101,3 +101,18 @@ def aggregate_episode_results(episode_infos):
             results[key + "_max"] = np.max([info[key] for info in episode_infos])
             results[key + "_std"] = np.std([info[key] for info in episode_infos])
     return results
+
+def create_expert_policy(config, observation_space, action_space, device):
+    """Creates an expert policy based on the environment configuration.
+
+    Arguments:
+        config {dict} -- Environment expert configuration
+        
+    Returns:
+        {torch.model} -- Expert policy
+    """
+    if "expert_policy" not in config:
+        return None
+    if config["type"] == "Crafter" and config["expert_policy"] == "dreamerv3":
+        from neroRRL.expert import DreamerV3Wrapper
+        return DreamerV3Wrapper(config["config_path"], config["model_path"], observation_space, action_space, device)
