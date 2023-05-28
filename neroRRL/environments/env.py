@@ -73,10 +73,10 @@ class Env(ABC):
         """Returns the expert policy."""
         return None
     
-    def _forward_expert(self, state):
+    def _forward_expert(self, env_state):
         """Forwards the expert policy and returns the action."""
         return None
     
-    def _generate_expert_reward(self, policy, expert_policy):
+    def _generate_expert_reward(self, policy_state):
         """Generates an expert reward for the given state and action."""
         return 0

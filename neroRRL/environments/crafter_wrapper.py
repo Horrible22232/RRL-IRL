@@ -131,13 +131,14 @@ class CrafterWrapper(Env):
         act = {'action': self._env.act_space['action'].sample(), 'reset': np.array(True)}
         env_data = self._env.step(act)
         
+        # Normalize the visual observation
         vis_obs = env_data['image'] / 255.0
-        
         # Track rewards of an entire episode
         self._rewards = []
-        
+        # To track the policy of the expert for generating the expert reward
         if self._has_expert:
-            self._forward_expert(obs)
+            self._state = None
+            self._forward_expert(env_data)
 
         if self._realtime_mode:
             self._env.render()
@@ -149,6 +150,20 @@ class CrafterWrapper(Env):
         } if self._record else None
 
         return vis_obs, None
+
+    def _forward_expert(self, env_data):
+        """Forwards the expert policy to generate the policy of the expert.
+
+        Arguments:
+            env_data {dict}: The environment data
+        """
+        env_data = {k: v[None] if isinstance(v, (list, dict)) else np.array([v]) for k, v in env_data.items()}
+        self._policy, self._state = self._agent(env_data, self._state)
+
+    @property
+    def _expert_policy(self):
+        """Returns the expert policy."""
+        return self._policy
 
     def step(self, action):
         """Runs one timestep of the environment's dynamics.
@@ -163,20 +178,27 @@ class CrafterWrapper(Env):
             {bool} -- Whether the episode of the environment terminated
             {dict} -- Further episode information (e.g. cumulated reward) retrieved from the environment once an episode completed
         """
-            
-        act = {'action': action, 'reset': np.array(False)}
+        # Prepare action for the environment
+        act = {'action': action["action"], 'reset': np.array(False)}
+        # Execute action in the environment
         env_data = self._env.step(act)
-        
-        vis_obs, reward, done, info = env_data['image'] / 255.0, env_data['reward'], env_data['is_last'], {}
-        
+        # Retrieve visual observation, reward, and done flag from the environment data
+        vis_obs, env_reward, done, info = env_data['image'] / 255.0, env_data['reward'], env_data['is_last'], {}
+        # Generate expert reward
+        expert_reward = self._expert_reward(action) if self._has_expert else 0.0
+        # Set reward
+        reward = (env_reward, expert_reward)
+        # To track the policy of the expert for generating the expert reward
+        if self._has_expert:
+            self._forward_expert(env_data)
         # Track rewards of an entire episode
-        self._rewards.append(reward)
-
+        self._rewards.append(env_reward)
+        
         if self._realtime_mode or self._record:
-            img = env_data['image']
+            img = self._env.render()
             
         # Wrap up episode information once completed (i.e. done)
-        if done or truncation:
+        if done:
             info = {"reward": sum(self._rewards),
                     "length": len(self._rewards)}
         else:
@@ -186,7 +208,7 @@ class CrafterWrapper(Env):
         if self._record:
             self._trajectory["vis_obs"].append(env_data['image'])
             self._trajectory["vec_obs"].append(None)
-            self._trajectory["rewards"].append(reward)
+            self._trajectory["rewards"].append(env_reward)
             self._trajectory["actions"].append([action])
 
         return vis_obs, None, reward, done, info

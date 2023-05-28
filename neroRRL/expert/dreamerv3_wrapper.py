@@ -90,8 +90,8 @@ act = {'action': env.act_space['action'].sample(), 'reset': np.array(True)}
 done, rewards, iter = False, [], 0
 while not done:
     obs = env.step(act)
+    
     print(obs.keys())
-    assert(False)
     obs = {k: v[None] if isinstance(v, (list, dict)) else np.array([v]) for k, v in obs.items()}
     policy, state = agent(obs, state)
     
