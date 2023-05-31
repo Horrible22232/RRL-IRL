@@ -9,7 +9,7 @@ from neroRRL.environments.wrappers.last_action_to_obs import LastActionToObs
 from neroRRL.environments.wrappers.last_reward_to_obs import LastRewardToObs
 from neroRRL.environments.wrappers.reward_normalization import RewardNormalizer
 
-def wrap_environment(config, worker_id, realtime_mode = False, record_trajectory = False):
+def wrap_environment(config, worker_id, realtime_mode = False, record_trajectory = False, expert = None):
     """This function instantiates an environment and applies wrappers based on the specified config.
 
     Arguments:
@@ -49,7 +49,9 @@ def wrap_environment(config, worker_id, realtime_mode = False, record_trajectory
     elif config["type"] == "RandomMaze":
         from neroRRL.environments.maze_wrapper import MazeWrapper
         env = MazeWrapper(config["reset_params"], realtime_mode=realtime_mode, record_trajectory=record_trajectory)
-        
+    elif config["type"] == "Crafter":
+        from neroRRL.environments.crafter_wrapper import CrafterWrapper
+        env = CrafterWrapper(config["expert"], config["reset_params"], realtime_mode=realtime_mode, record_trajectory=record_trajectory, expert=expert)
 
     # Wrap environment
     # Frame Skip

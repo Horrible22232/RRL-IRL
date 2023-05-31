@@ -13,6 +13,7 @@ environment:
     config_path: "./model/expert/crafter/config.yaml"
     model_path: "./model/expert/crafter/checkpoint.ckpt"
     reward_type: "inverse_kl_divergence"
+    device: "cuda"
 
 model:
   load_model: False

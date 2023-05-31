@@ -1,4 +1,4 @@
-from neroRRL.environments.wrappers.expert_rewards import PyTorchEnv
+from neroRRL.environments.wrappers.expert_rewards.base import PyTorchEnv
 
 class KLInverseReward(PyTorchEnv):
     """Gives a reward based on the inverse of the KL divergence between the expert and agent policy.

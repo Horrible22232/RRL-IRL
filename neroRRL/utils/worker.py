@@ -5,7 +5,7 @@ from random import randint
 
 from neroRRL.environments.wrapper import wrap_environment
 
-def worker_process(remote: multiprocessing.connection.Connection, env_seed, env_config, worker_id: int, record_video = False):
+def worker_process(remote: multiprocessing.connection.Connection, env_seed, env_config, worker_id: int, record_video = False, expert = None):
     """Initializes the environment and executes its interface.
 
     Arguments:
@@ -22,7 +22,7 @@ def worker_process(remote: multiprocessing.connection.Connection, env_seed, env_
 
     # Initialize and wrap the environment
     try:
-        env = wrap_environment(env_config, worker_id, record_trajectory = record_video)
+        env = wrap_environment(env_config, worker_id, record_trajectory = record_video, expert=expert)
     except KeyboardInterrupt:
         pass
 
@@ -50,7 +50,7 @@ class Worker:
     child: multiprocessing.connection.Connection
     process: multiprocessing.Process
     
-    def __init__(self, env_config, worker_id: int, record_video = False):
+    def __init__(self, env_config, worker_id: int, record_video = False, expert = None):
         """
         Arguments:
             env_config {dict -- The configuration data of the desired environment
@@ -58,7 +58,7 @@ class Worker:
         """
         env_seed = randint(0, 2 ** 32 - 1)
         self.child, parent = multiprocessing.Pipe()
-        self.process = multiprocessing.Process(target=worker_process, args=(parent, env_seed, env_config, worker_id, record_video))
+        self.process = multiprocessing.Process(target=worker_process, args=(parent, env_seed, env_config, worker_id, record_video, expert))
         self.process.start()
 
     def close(self):

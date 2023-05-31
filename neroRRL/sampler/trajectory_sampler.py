@@ -3,6 +3,7 @@ import torch
 
 from neroRRL.sampler.buffer import Buffer
 from neroRRL.utils.worker import Worker
+from neroRRL.utils.utils import create_expert_policy
 
 class TrajectorySampler():
     """The TrajectorySampler employs n environment workers to sample data for s worker steps regardless if an episode ended.
@@ -24,6 +25,7 @@ class TrajectorySampler():
         self.visual_observation_space = visual_observation_space
         self.vector_observation_space = vector_observation_space
         self.model = model
+        self.expert = create_expert_policy(configs["environment"], visual_observation_space, vector_observation_space, action_space_shape, torch.device(configs["expert"]["device"]))
         self.n_workers = configs["sampler"]["n_workers"]
         self.worker_steps = configs["sampler"]["worker_steps"]
         self.sample_device = sample_device
@@ -34,7 +36,7 @@ class TrajectorySampler():
                         action_space_shape, self.train_device, self.model.share_parameters, self)
 
         # Launch workers
-        self.workers = [Worker(configs["environment"], worker_id + 200 + w) for w in range(self.n_workers)]
+        self.workers = [Worker(configs["environment"], worker_id + 200 + w, expert=self.expert) for w in range(self.n_workers)]
         # Setup timestep placeholder
         self.worker_current_episode_step = torch.zeros((self.n_workers, ), dtype=torch.long)
         
