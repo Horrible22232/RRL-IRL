@@ -83,7 +83,7 @@ env = crafter.Env()
 env = from_gym.FromGym(env)
 env = dreamerv3.wrap_env(env, config)
 
-# agent = DreamerV3Wrapper(config_path, model_path, env.obs_space, env.act_space, torch.device("cuda"))
+agent = DreamerV3Wrapper(config_path, model_path, env.obs_space, env.act_space, torch.device("cuda"))
 
 state = None
 act = {'action': env.act_space['action'].sample(), 'reset': np.array(True)}

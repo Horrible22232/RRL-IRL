@@ -161,8 +161,8 @@ class CrafterWrapper(Env):
         self._policy, self._state = self._agent(env_data, self._state)
 
     @property
-    def _expert_policy(self):
-        """Returns the expert policy."""
+    def _expert_policy_state(self):
+        """Returns the expert policy state."""
         return self._policy
 
     def step(self, action):

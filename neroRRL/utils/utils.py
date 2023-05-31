@@ -111,8 +111,8 @@ def create_expert_policy(config, observation_space, action_space, device):
     Returns:
         {torch.model} -- Expert policy
     """
-    if "expert_policy" not in config:
+    if "expert" not in config:
         return None
-    if config["type"] == "Crafter" and config["expert_policy"] == "dreamerv3":
+    if config["type"] == "Crafter" and config["expert"] == "dreamerv3":
         from neroRRL.expert import DreamerV3Wrapper
-        return DreamerV3Wrapper(config["config_path"], config["model_path"], observation_space, action_space, device)
+        return DreamerV3Wrapper(config["expert"]["config_path"], config["expert"]["model_path"], observation_space, action_space, device)

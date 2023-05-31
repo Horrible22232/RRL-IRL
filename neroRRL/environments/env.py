@@ -69,8 +69,8 @@ class Env(ABC):
         return False
     
     @property
-    def _expert_policy(self):
-        """Returns the expert policy."""
+    def _expert_policy_state(self):
+        """Returns the expert policy state."""
         return None
     
     def _forward_expert(self, env_state):

@@ -6,10 +6,9 @@ class PyTorchEnv(Env):
     """This wrapper reshapes the visual observation to the needs of PyTorch. (W x H x C -> C x W x H)"""
 
     def __init__(self, env):
-        """Defines the shape of the new visual observation.
-        
+        """
         Arguments:
-            env {Env} -- The to be wrapped environment that needs visual observations.
+            env {Env} -- The to be wrapped environment
         """
         self._env = env
 
