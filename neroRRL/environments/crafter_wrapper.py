@@ -1,8 +1,10 @@
 import crafter
+
 import numpy as np
 
 from pathlib import Path
 from random import randint
+from gymnasium import spaces
 
 from neroRRL.environments.env import Env
 from neroRRL.expert.modules import dreamerv3
@@ -48,8 +50,11 @@ class CrafterWrapper(Env):
         self._realtime_mode = realtime_mode
         self._record = record_trajectory
 
-        self._visual_observation_space = self._env.observation_space
+        self._visual_observation_space = self._env.obs_space["image"]
         self._vector_observation_space = None
+        
+        self.num_actions = self._env.act_space['action'].shape[0] 
+        self.actions = np.eye(self.num_actions)
         
     @property
     def _has_expert(self):
@@ -79,12 +84,12 @@ class CrafterWrapper(Env):
     @property
     def action_space(self):
         """Returns the shape of the action space of the agent."""
-        return self._env.action_space
+        return spaces.Discrete(self.num_actions)
 
     @property
     def max_episode_steps(self):
         """Returns the maximum number of steps that an episode can last."""
-        return self._env.max_episode_steps
+        return 2000
 
     @property
     def seed(self):
@@ -178,8 +183,10 @@ class CrafterWrapper(Env):
             {bool} -- Whether the episode of the environment terminated
             {dict} -- Further episode information (e.g. cumulated reward) retrieved from the environment once an episode completed
         """
+        # Convert action to one-hot vector
+        action = self.actions[action[0]]
         # Prepare action for the environment
-        act = {'action': action["action"], 'reset': np.array(False)}
+        act = {'action': action, 'reset': np.array(False)}
         # Execute action in the environment
         env_data = self._env.step(act)
         # Retrieve visual observation, reward, and done flag from the environment data
@@ -211,7 +218,7 @@ class CrafterWrapper(Env):
             self._trajectory["rewards"].append(env_reward)
             self._trajectory["actions"].append([action])
 
-        return vis_obs, None, reward, done, info
+        return vis_obs, None, env_reward, done, info
 
     def close(self):
         """Shuts down the environment."""

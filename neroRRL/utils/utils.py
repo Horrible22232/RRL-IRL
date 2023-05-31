@@ -102,7 +102,7 @@ def aggregate_episode_results(episode_infos):
             results[key + "_std"] = np.std([info[key] for info in episode_infos])
     return results
 
-def create_expert_policy(config, observation_space, action_space, device):
+def create_expert_policy(config, visual_observation_space, vector_observation_space, action_space, device):
     """Creates an expert policy based on the environment configuration.
 
     Arguments:

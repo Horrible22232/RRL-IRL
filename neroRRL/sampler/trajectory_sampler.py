@@ -25,7 +25,7 @@ class TrajectorySampler():
         self.visual_observation_space = visual_observation_space
         self.vector_observation_space = vector_observation_space
         self.model = model
-        self.expert = create_expert_policy(configs["environment"], visual_observation_space, vector_observation_space, action_space_shape, torch.device(configs["expert"]["device"]))
+        self.expert = create_expert_policy(configs["environment"], visual_observation_space, vector_observation_space, action_space_shape, torch.device(configs["environment"]["expert"]["device"]))
         self.n_workers = configs["sampler"]["n_workers"]
         self.worker_steps = configs["sampler"]["worker_steps"]
         self.sample_device = sample_device
