@@ -43,7 +43,10 @@ class CrafterWrapper(Env):
         config = embodied.Config.load(config_path)
         
         # Create the environment like in the dreamerv3 code
-        self._env = crafter.Env() 
+        self._env = crafter.Env()
+        # Get the action names
+        self._action_names = [self._env.action_names] 
+        # Wrap the environment like in the dreamerv3 code
         self._env = from_gym.FromGym(self._env)
         self._env = dreamerv3.wrap_env(self._env, config)
 
@@ -54,7 +57,7 @@ class CrafterWrapper(Env):
         self._vector_observation_space = None
         
         self.num_actions = self._env.act_space['action'].shape[0] 
-        self.actions = np.eye(self.num_actions)
+        self.one_hot_actions = np.eye(self.num_actions)
         
     @property
     def _has_expert(self):
@@ -99,7 +102,7 @@ class CrafterWrapper(Env):
     @property
     def action_names(self):
         """Returns a list of action names. It has to be noted that only the names of action branches are provided and not the actions themselves!"""
-        return [["no-op", "rotate left", "rotate right", "move forward"]]
+        self._action_names
 
     @property
     def get_episode_trajectory(self):
@@ -184,7 +187,7 @@ class CrafterWrapper(Env):
             {dict} -- Further episode information (e.g. cumulated reward) retrieved from the environment once an episode completed
         """
         # Convert action to one-hot vector
-        action = self.actions[action[0]]
+        action = self.one_hot_actions[action[0]]
         # Prepare action for the environment
         act = {'action': action, 'reset': np.array(False)}
         # Execute action in the environment
