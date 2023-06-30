@@ -115,4 +115,4 @@ def create_expert_policy(config, visual_observation_space, vector_observation_sp
         return None
     if config["type"] == "Crafter" and config["expert"] == "dreamerv3":
         from neroRRL.expert import DreamerV3Wrapper
-        return DreamerV3Wrapper(config["expert"]["config_path"], config["expert"]["model_path"], observation_space, action_space, device)
+        return DreamerV3Wrapper(config["expert"]["config_path"], config["expert"]["model_path"], visual_observation_space, action_space, device)

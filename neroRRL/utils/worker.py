@@ -1,5 +1,6 @@
 import multiprocessing
 import multiprocessing.connection
+import threading
 
 from random import randint
 
@@ -71,7 +72,6 @@ class Worker:
 import tblib.pickling_support
 tblib.pickling_support.install()
 import sys
-
 class WorkerException(Exception):
     def __init__(self, ee):
         self.ee = ee
@@ -80,3 +80,65 @@ class WorkerException(Exception):
 
     def re_raise(self):
         raise (self.ee, None, self.tb)
+    
+class WorkerList:
+    def __init__(self, worker_id, configs, n_workers, expert):
+        """
+        Arguments:
+            worker_id (_type_): _description_
+            configs (_type_): _description_
+            expert (_type_): _description_
+        """
+        # The number of workers
+        self.n_workers = n_workers
+        # The list of environments which should be reset
+        self.envs_to_be_reset = [None for w in range(self.n_workers)]
+        # The condition variable to wait on
+        self.condition = threading.Condition()
+        # Launch workers
+        self.workers = [Worker(configs, worker_id + 200 + w, expert=expert) for w in range(self.n_workers)]
+        # Reset workers which should be swapped
+        for worker in self.workers:
+            worker.child.send(("reset", None))
+        self.reset_obs = [worker.child.recv() for worker in self.workers]
+        self._is_filled = False
+
+        # Create the thread
+        self.thread = threading.Thread(target=self.wait_and_reset)
+        self.thread.start()
+  
+    @property
+    def is_filled(self):
+        return self._is_filled  # Adjust the condition as needed
+    
+    def reset(self, worker, w):
+        # Set the flag
+        self._is_filled = True
+        # Return the buffered rested worker and observation
+        with self.condition:
+            # Put the worker in the list of workers to be reset
+            self.envs_to_be_reset[w] = worker
+            # Notify all waiting threads
+            self.condition.notify_all() 
+            
+        return self.workers[w], self.reset_obs[w]
+    
+    def wait_and_reset(self):
+        with self.condition:
+            while True:
+                while not self.is_filled:
+                    self.condition.wait()  # Wait until the list is filled
+
+                # Execute the function
+                for w in range(self.n_workers):
+                    if self.envs_to_be_reset[w] is not None:
+                        self.envs_to_be_reset[w].child.send(("reset", None))
+                        self.reset_obs[w] = self.envs_to_be_reset[w].child.recv()
+                        self.workers[w] = self.envs_to_be_reset[w]
+                        self.envs_to_be_reset[w] = None
+                
+                # Reset the condition
+                self._is_filled = False
+    
+    def close(self):
+        self.thread.join()

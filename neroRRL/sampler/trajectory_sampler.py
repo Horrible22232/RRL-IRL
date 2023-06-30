@@ -2,7 +2,7 @@ import numpy as np
 import torch
 
 from neroRRL.sampler.buffer import Buffer
-from neroRRL.utils.worker import Worker
+from neroRRL.utils.worker import Worker, WorkerList
 from neroRRL.utils.utils import create_expert_policy
 
 class TrajectorySampler():
@@ -36,7 +36,9 @@ class TrajectorySampler():
                         action_space_shape, self.train_device, self.model.share_parameters, self)
 
         # Launch workers
-        self.workers = [Worker(configs["environment"], worker_id + 200 + w, expert=self.expert) for w in range(self.n_workers)]
+        self.workers = [Worker(configs["environment"], worker_id + 200 + w, expert=self.expert) for w in range(self.n_workers)]#
+        # Launch worker list
+        # self.worker_list = WorkerList(worker_id, configs["environment"], self.n_workers, self.expert)
         # Setup timestep placeholder
         self.worker_current_episode_step = torch.zeros((self.n_workers, ), dtype=torch.long)
         
@@ -156,6 +158,11 @@ class TrajectorySampler():
         worker.child.send(("reset", None))
         # Get data from reset
         vis_obs, vec_obs = worker.child.recv()
+        # Get new worker
+        #new_worker, (vis_obs, vec_obs) = self.worker_list.reset(worker, id)
+        # Replace worker
+        #self.workers[id] = new_worker
+        
         if self.vis_obs is not None:
             self.vis_obs[id] = vis_obs
         if self.vec_obs is not None:
