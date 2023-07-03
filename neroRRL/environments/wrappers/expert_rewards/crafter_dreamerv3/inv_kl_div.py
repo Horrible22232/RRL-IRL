@@ -16,5 +16,7 @@ class KLInverseReward(PyTorchEnv):
             float -- The expert reward.
         """
         expert_policy_state = self._expert_policy_state
-        
+        print(type(expert_policy_state))
+        print("expert_policy_state: ", expert_policy_state)
+        assert False
         return 0

@@ -40,7 +40,7 @@ class CrafterWrapper(Env):
         # Use the dreamerv3 config to make sure that the environment is compatible with the dreamerv3 agent
         config_path = './model/expert/crafter/config.yaml' if expert_params is None else expert_params["config_path"]
         config_path = Path(config_path)
-        config = embodied.Config.load(config_path)
+        self.config = embodied.Config.load(config_path)
         
         # Create the environment like in the dreamerv3 code
         self._env = crafter.Env()
@@ -48,7 +48,7 @@ class CrafterWrapper(Env):
         self._action_names = [self._env.action_names] 
         # Wrap the environment like in the dreamerv3 code
         self._env = from_gym.FromGym(self._env)
-        self._env = dreamerv3.wrap_env(self._env, config)
+        self._env = dreamerv3.wrap_env(self._env, self.config)
 
         self._realtime_mode = realtime_mode
         self._record = record_trajectory
@@ -58,7 +58,7 @@ class CrafterWrapper(Env):
         
         self.num_actions = self._env.act_space['action'].shape[0] 
         self.one_hot_actions = np.eye(self.num_actions)
-        
+            
     @property
     def _has_expert(self):
         """Returns whether the environment has an expert."""
@@ -146,7 +146,7 @@ class CrafterWrapper(Env):
         # To track the policy of the expert for generating the expert reward
         if self._has_expert:
             self._state = None
-            self._forward_expert(env_data)
+            # self._forward_expert(env_data)
 
         if self._realtime_mode:
             self._env.render()
@@ -166,7 +166,7 @@ class CrafterWrapper(Env):
             env_data {dict}: The environment data
         """
         env_data = {k: v[None] if isinstance(v, (list, dict)) else np.array([v]) for k, v in env_data.items()}
-        self._policy, self._state = self._agent(env_data, self._state)
+        self._policy, self._state = self._expert(env_data, self._state)
 
     @property
     def _expert_policy_state(self):
@@ -195,12 +195,13 @@ class CrafterWrapper(Env):
         # Retrieve visual observation, reward, and done flag from the environment data
         vis_obs, env_reward, done, info = env_data['image'] / 255.0, env_data['reward'], env_data['is_last'], {}
         # Generate expert reward
-        expert_reward = self._expert_reward(action) if self._has_expert else 0.0
+        #expert_reward = self._expert_reward(action[0]) if self._has_expert else 0.0
         # Set reward
-        reward = (env_reward, expert_reward)
+        #reward = env_reward + expert_reward
         # To track the policy of the expert for generating the expert reward
-        if self._has_expert:
-            self._forward_expert(env_data)
+
+        #if self._has_expert:
+        #    self._forward_expert(env_data)
         # Track rewards of an entire episode
         self._rewards.append(env_reward)
         

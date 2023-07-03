@@ -8,6 +8,7 @@ from neroRRL.environments.wrappers.pytorch_shape import PyTorchEnv
 from neroRRL.environments.wrappers.last_action_to_obs import LastActionToObs
 from neroRRL.environments.wrappers.last_reward_to_obs import LastRewardToObs
 from neroRRL.environments.wrappers.reward_normalization import RewardNormalizer
+from neroRRL.environments.wrappers.expert_rewards.crafter_dreamerv3.inv_kl_div import KLInverseReward
 
 def wrap_environment(config, worker_id, realtime_mode = False, record_trajectory = False, expert = None):
     """This function instantiates an environment and applies wrappers based on the specified config.
@@ -51,6 +52,7 @@ def wrap_environment(config, worker_id, realtime_mode = False, record_trajectory
         env = MazeWrapper(config["reset_params"], realtime_mode=realtime_mode, record_trajectory=record_trajectory)
     elif config["type"] == "Crafter":
         from neroRRL.environments.crafter_wrapper import CrafterWrapper
+        print("Crafter expert: ", expert, flush=True)
         env = CrafterWrapper(config["expert"], config["reset_params"], realtime_mode=realtime_mode, record_trajectory=record_trajectory, expert=expert)
 
     # Wrap environment
@@ -80,5 +82,11 @@ def wrap_environment(config, worker_id, realtime_mode = False, record_trajectory
         env = StackedObservationEnv(env, config["obs_stacks"])
     if config["reward_normalization"] > 1:
         env = RewardNormalizer(env, config["reward_normalization"])
+    env = PyTorchEnv(env)
+    
+    # Wrap expert reward if specified
+    if "expert" in config:
+        if config["expert"]["reward_type"] == "inverse_kl_divergence":
+            env = KLInverseReward(env)
         
-    return PyTorchEnv(env)
+    return env

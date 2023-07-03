@@ -67,7 +67,8 @@ def get_environment_specs(env_config, worker_id, realtime_mode = False):
     Returns:
         {tuple} -- Returns visual observation space, vector observations space, action space and max episode steps
     """
-    dummy_env = wrap_environment(env_config, worker_id, realtime_mode)
+    expert = create_expert_policy(env_config, None, None, None)
+    dummy_env = wrap_environment(env_config, worker_id, realtime_mode, expert = expert)
     vis_obs, vec_obs = dummy_env.reset(env_config["reset_params"])
     max_episode_steps = dummy_env.max_episode_steps
     visual_observation_space = dummy_env.visual_observation_space
@@ -102,7 +103,7 @@ def aggregate_episode_results(episode_infos):
             results[key + "_std"] = np.std([info[key] for info in episode_infos])
     return results
 
-def create_expert_policy(config, visual_observation_space, vector_observation_space, action_space, device):
+def create_expert_policy(config, visual_observation_space, vector_observation_space, action_space):
     """Creates an expert policy based on the environment configuration.
 
     Arguments:
@@ -111,8 +112,17 @@ def create_expert_policy(config, visual_observation_space, vector_observation_sp
     Returns:
         {torch.model} -- Expert policy
     """
+
     if "expert" not in config:
         return None
-    if config["type"] == "Crafter" and config["expert"] == "dreamerv3":
-        from neroRRL.expert import DreamerV3Wrapper
-        return DreamerV3Wrapper(config["expert"]["config_path"], config["expert"]["model_path"], visual_observation_space, action_space, device)
+    if config["type"] == "Crafter" and config["expert"]["model"] == "DreamerV3":
+        from neroRRL.expert.dreamerv3_wrapper import DreamerV3Wrapper
+        from neroRRL.expert.modules.dreamerv3.embodied.envs import from_gym
+        from neroRRL.expert.modules.dreamerv3.embodied.core import Checkpoint
+        from neroRRL.expert.modules import dreamerv3
+        from neroRRL.expert.modules.dreamerv3 import embodied
+        import crafter
+        env = crafter.Env() 
+        env = from_gym.FromGym(env)
+        env = dreamerv3.wrap_env(env, embodied.Config.load(config["expert"]["config_path"]))
+        return DreamerV3Wrapper(config["expert"]["config_path"], config["expert"]["model_path"],  env.obs_space, env.act_space, torch.device(config["expert"]["device"]))

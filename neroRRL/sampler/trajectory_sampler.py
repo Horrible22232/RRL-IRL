@@ -25,7 +25,8 @@ class TrajectorySampler():
         self.visual_observation_space = visual_observation_space
         self.vector_observation_space = vector_observation_space
         self.model = model
-        self.expert = create_expert_policy(configs["environment"], visual_observation_space, vector_observation_space, action_space_shape, torch.device(configs["environment"]["expert"]["device"]))
+        self.expert = create_expert_policy(configs["environment"], visual_observation_space, vector_observation_space, action_space_shape)
+        self.expert_state = None
         self.n_workers = configs["sampler"]["n_workers"]
         self.worker_steps = configs["sampler"]["worker_steps"]
         self.sample_device = sample_device
@@ -83,7 +84,9 @@ class TrajectorySampler():
                 # the states' value of the value function and the recurrent hidden states (if available)
                 vis_obs_batch = torch.tensor(self.vis_obs) if self.vis_obs is not None else None
                 vec_obs_batch = torch.tensor(self.vec_obs) if self.vec_obs is not None else None
-                policy, value = self.forward_model(vis_obs_batch, vec_obs_batch, t)      
+                policy, value = self.forward_model(vis_obs_batch, vec_obs_batch, t)
+                # Forward the expert model to retrieve the policy (making decisions)
+                self.forward_expert(self.vis_obs, self.vec_obs, t)      
 
                 # Sample actions from each individual policy branch
                 actions = []
@@ -143,6 +146,20 @@ class TrajectorySampler():
         """
         policy, value, _, _ = self.model(vis_obs, vec_obs)
         return policy, value
+    
+    def forward_expert(self, vis_obs, vec_obs, t):
+        image = vis_obs.copy()
+        image = np.resize(image, (self.n_workers, 3, 64, 64))
+        image= image.transpose((0, 2, 3, 1))
+        obs = {"image": image, "reward": self.buffer.rewards[:, t], "is_last": self.buffer.dones[:, t], "is_terminal": self.buffer.dones[:, t]}
+        obs["is_first"] = np.zeros((self.n_workers, ), dtype=np.bool)
+        for w in range(self.n_workers):
+            if t == 0 or self.buffer.dones[w, t-1]:
+                obs["is_first"][w] = True
+                         
+        expert_policy, self.expert_state = self.expert(obs, self.expert_state)
+        
+        # print(expert_policy.sample().cpu().numpy())
 
     def reset_worker(self, worker, id, t):
         """Resets the specified worker.

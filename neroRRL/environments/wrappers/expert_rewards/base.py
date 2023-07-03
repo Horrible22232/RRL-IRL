@@ -20,7 +20,7 @@ class PyTorchEnv(Env):
     @property
     def visual_observation_space(self):
         """Returns the shape of the visual component of the observation space as a tuple."""
-        return self._env.visual_observation_space.shape
+        return self._env.visual_observation_space
 
     @property
     def vector_observation_space(self):
