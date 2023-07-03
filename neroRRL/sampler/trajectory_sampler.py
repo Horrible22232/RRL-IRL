@@ -26,7 +26,7 @@ class TrajectorySampler():
         self.vector_observation_space = vector_observation_space
         self.model = model
         self.expert = create_expert_policy(configs["environment"], visual_observation_space, vector_observation_space, action_space_shape)
-        self.expert_model_name = configs["environment"]["expert"]["model"]
+        self.expert_model_name = configs["environment"]["expert"]["model"] if "expert" in configs["environment"] else ""
         self.expert_state = None
         self.n_workers = configs["sampler"]["n_workers"]
         self.worker_steps = configs["sampler"]["worker_steps"]
