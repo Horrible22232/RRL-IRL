@@ -52,7 +52,6 @@ def wrap_environment(config, worker_id, realtime_mode = False, record_trajectory
         env = MazeWrapper(config["reset_params"], realtime_mode=realtime_mode, record_trajectory=record_trajectory)
     elif config["type"] == "Crafter":
         from neroRRL.environments.crafter_wrapper import CrafterWrapper
-        print("Crafter expert: ", expert, flush=True)
         env = CrafterWrapper(config["expert"], config["reset_params"], realtime_mode=realtime_mode, record_trajectory=record_trajectory, expert=expert)
 
     # Wrap environment
