@@ -13,7 +13,7 @@ environment:
     model: "DreamerV3"
     config_path: "./model/expert/crafter/config.yaml"
     model_path: "./model/expert/crafter/checkpoint.ckpt"
-    reward_type: "inverse_kl_divergence"
+    reward_type: "jsd"
     device: "cuda"
 
 model:

@@ -4,6 +4,7 @@ import torch
 from neroRRL.sampler.buffer import Buffer
 from neroRRL.utils.worker import Worker, WorkerList
 from neroRRL.utils.utils import create_expert_policy
+from neroRRL.environments.wrappers.expert_rewards.expert_rewards import *
 
 class TrajectorySampler():
     """The TrajectorySampler employs n environment workers to sample data for s worker steps regardless if an episode ended.
@@ -27,6 +28,7 @@ class TrajectorySampler():
         self.model = model
         self.expert = create_expert_policy(configs["environment"], visual_observation_space, vector_observation_space, action_space_shape)
         self.expert_model_name = configs["environment"]["expert"]["model"] if "expert" in configs["environment"] else ""
+        self.expert_reward_type = configs["environment"]["expert"]["reward_type"] if "expert" in configs["environment"] else ""
         self.expert_state = None
         self.n_workers = configs["sampler"]["n_workers"]
         self.worker_steps = configs["sampler"]["worker_steps"]
@@ -108,7 +110,7 @@ class TrajectorySampler():
 
             # Retrieve results
             for w, worker in enumerate(self.workers):
-                vis_obs, vec_obs, self.buffer.rewards[w, t], self.buffer.dones[w, t], info = worker.child.recv()
+                vis_obs, vec_obs, self.buffer.env_rewards[w, t], self.buffer.dones[w, t], info = worker.child.recv()
                 if self.vis_obs is not None:
                     self.vis_obs[w] = vis_obs
                 if self.vec_obs is not None:
@@ -124,7 +126,7 @@ class TrajectorySampler():
             # Create expert reward
             expert_reward = self.generate_expert_reward(policy, expert_policy, self.buffer.actions[:, t])
             # Add expert reward to the environment reward
-            self.buffer.rewards[:, t] += expert_reward
+            self.buffer.expert_rewards[:, t] = expert_reward
 
         return episode_infos
 
@@ -154,6 +156,16 @@ class TrajectorySampler():
         return policy, value
     
     def forward_expert(self, vis_obs, vec_obs, t):
+        """ Forwards the expert model to retrieve the policy of the to be fed observations.
+
+        Arguments:
+            vis_obs {torch.tensor} -- Visual observations batched across workers
+            vec_obs {torch.tensor} -- Vector observations batched across workers
+            t {int} -- Current step of sampling
+
+        Returns:
+            {torch.distribution} -- policy
+        """
         expert_policy = None
         if self.expert_model_name == "DreamerV3":
             # Transform visual observations to the correct shape for the expert model
@@ -161,12 +173,12 @@ class TrajectorySampler():
             image = np.resize(image, (self.n_workers, 3, 64, 64))
             image= image.transpose((0, 2, 3, 1))
             # Create the expert model's input
-            obs = {"image": image, "reward": self.buffer.rewards[:, t], "is_last": self.buffer.dones[:, t], "is_terminal": self.buffer.dones[:, t]}
+            obs = {"image": image, "reward": self.buffer.env_rewards[:, t], "is_last": self.buffer.dones[:, t], "is_terminal": self.buffer.dones[:, t]}
             obs["is_first"] = np.zeros((self.n_workers, ), dtype=np.bool)
             for w in range(self.n_workers):
                 if t == 0 or self.buffer.dones[w, t-1]:
                     obs["is_first"][w] = True
-            # Forward the expert model
+            # Forward the expert model to retrieve the One-Hot-Categorical-Policy and hidden states
             expert_policy, self.expert_state = self.expert(obs, self.expert_state)
         
         # print(expert_policy.sample().cpu().numpy())
@@ -175,16 +187,8 @@ class TrajectorySampler():
     def generate_expert_reward(self, policy, expert_policy, actions):
         expert_reward = 0
         if self.expert_model_name == "DreamerV3":
-            # Jensen-Shannon Divergence (JSD) between the agent's policy and the expert's policy
-            policy = policy[0]
-            agent_probs = policy.probs
-            expert_probs = expert_policy.probs
-            # Calculate the Jensen-Shannon Divergence
-            jsd = torch.sum(agent_probs * torch.log(agent_probs / expert_probs), dim=1) + torch.sum(expert_probs * torch.log(expert_probs / agent_probs), dim=1) / 2
-
-            # Calculate the similarity score (normalized JSD)
-            similarity_score = 1 / (1 + jsd)
-            expert_reward = similarity_score.cpu().numpy()
+            if self.expert_reward_type == "jsd":
+                return jsd_reward(policy, expert_policy, actions)
 
         return expert_reward
 
