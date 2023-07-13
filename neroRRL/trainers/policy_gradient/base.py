@@ -94,8 +94,8 @@ class BaseTrainer():
         sample_episode_info = self.sampler.sample()
 
         # 3.: Calculate advantages
-        last_value = self.sampler.get_last_value()
-        self.sampler.buffer.calc_advantages(last_value, self.gamma, self.lamda)
+        last_value, last_expert_value = self.sampler.get_last_value()
+        self.sampler.buffer.calc_advantages(last_value, last_expert_value, self.gamma, self.lamda)
         
         # 4.: If a recurrent policy is used, set the mean of the recurrent cell states for future initializations
         if self.recurrence:

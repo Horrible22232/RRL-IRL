@@ -317,8 +317,12 @@ class ActorCriticSharedWeights(ActorCriticBase):
         # Policy head/output
         self.actor_policy = MultiDiscreteActionPolicy(self.out_features_body, action_space_shape, self.activ_fn)
 
-        # Value function head/output
+        # Value function head/output for the environment reward
         self.critic = ValueEstimator(self.out_features_body, self.activ_fn)
+        # Value function head/output for the expert reward
+        self.critic_expert = None
+        if config["value_head"] == "multi":
+            self.critic_expert = ValueEstimator(self.out_features_body, self.activ_fn)
 
         # Organize all modules inside a dictionary
         # This will be used for collecting gradient statistics inside the trainer
@@ -330,10 +334,13 @@ class ActorCriticSharedWeights(ActorCriticBase):
             "actor_head": self.actor_policy,
             "critic_head": self.critic
         }
-
+        # Add the transformer blocks to the tracked modules
         if self.transformer is not None:
             for b, block in enumerate(self.transformer.transformer_blocks):
                 self.actor_critic_modules["transformer_" + str(b)] = block
+        # Add the expert critic to the tracked modules
+        if self.critic_expert is not None:
+            self.actor_critic_modules["critic_expert_head"] = self.critic_expert
 
     def forward(self, vis_obs, vec_obs, memory = None, mask = None, memory_indices = None, sequence_length = 1):
         """Forward pass of the model
@@ -373,10 +380,13 @@ class ActorCriticSharedWeights(ActorCriticBase):
 
         # Head: Value function
         value = self.critic(h)
+        value_expert = None
+        if self.critic_expert is not None:
+            value_expert = self.critic_expert(h)
         # Head: Policy branches
         pi = self.actor_policy(h)
 
-        return pi, value, memory, None
+        return pi, value, value_expert, memory, None
 
 def create_actor_critic_model(model_config, share_parameters, visual_observation_space, vector_observation_space, action_space_shape, device):
     """Creates a shared or non-shared weights actor critic model.

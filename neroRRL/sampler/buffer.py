@@ -39,11 +39,14 @@ class Buffer():
         else:
             self.vec_obs = None
         self.env_rewards = np.zeros((self.num_workers, self.worker_steps), dtype=np.float32)
-        self.expert_rewards = np.zeros((self.num_workers, self.worker_steps), dtype=np.float32)
+        if "expert" in self.configs:
+            self.expert_rewards = np.zeros((self.num_workers, self.worker_steps), dtype=np.float32)
         self.actions = torch.zeros((self.num_workers, self.worker_steps, len(self.action_space_shape)), dtype=torch.long)
         self.dones = np.zeros((self.num_workers, self.worker_steps), dtype=bool)
         self.log_probs = torch.zeros((self.num_workers, self.worker_steps, len(self.action_space_shape)))
         self.values = torch.zeros((self.num_workers, self.worker_steps))
+        if "expert" in self.configs and self.configs["model"]["value_head"] == "mixed":
+            self.values_expert = torch.zeros((self.num_workers, self.worker_steps))
 
     def init_recurrent_buffer_fields(self):
         """Initializes the buffer fields and members that are needed for training recurrent policies."""
@@ -80,7 +83,6 @@ class Buffer():
         # Indices to slice the memory window
         self.memory_indices = torch.zeros((self.num_workers, self.worker_steps, self.memory_length), dtype=torch.long)
 
-
     def _calc_advantages(self, last_value, gamma, lamda, rewards):
         """Generalized advantage estimation (GAE) based on given rewards and values.
 
@@ -107,24 +109,12 @@ class Buffer():
                 last_value = self.values[:, t]
         return advantages
 
-    def calc_expert_advantages(self, last_value, gamma, lamda):
-        with torch.no_grad():
-            last_advantage = 0
-            mask = torch.tensor(self.dones).logical_not() # mask values on terminal states
-            rewards = torch.tensor(self.expert_rewards)
-            for t in reversed(range(self.worker_steps)):
-                last_value = last_value * mask[:, t]
-                last_advantage = last_advantage * mask[:, t]
-                delta = rewards[:, t] + gamma * last_value - self.values[:, t]
-                last_advantage = delta + gamma * lamda * last_advantage
-                self.expert_advantages[:, t] = last_advantage
-                last_value = self.values[:, t]
-
-    def calc_advantages(self, last_value, gamma, lamda):
+    def calc_advantages(self, last_value, last_expert_value, gamma, lamda):
         """Generalized advantage estimation (GAE)
 
         Arguments:
             last_value {numpy.ndarray} -- Value of the last agent's state
+            last_expert_value {numpy.ndarray} -- Last value of the expert reward
             gamma {float} -- Discount factor
             lamda {float} -- GAE regularization parameter
         """

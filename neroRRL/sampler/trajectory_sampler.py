@@ -27,6 +27,7 @@ class TrajectorySampler():
         self.vector_observation_space = vector_observation_space
         self.model = model
         self.expert = create_expert_policy(configs, visual_observation_space, vector_observation_space, action_space_shape)
+        self.use_expert = True if "expert" in configs else False
         self.expert_model_name = configs["expert"]["model"] if "expert" in configs else ""
         self.expert_reward_type = configs["expert"]["reward_type"] if "expert" in configs else ""
         self.expert_state = None
@@ -87,9 +88,10 @@ class TrajectorySampler():
                 # the states' value of the value function and the recurrent hidden states (if available)
                 vis_obs_batch = torch.tensor(self.vis_obs) if self.vis_obs is not None else None
                 vec_obs_batch = torch.tensor(self.vec_obs) if self.vec_obs is not None else None
-                policy, value = self.forward_model(vis_obs_batch, vec_obs_batch, t)
+                policy, value, value_expert = self.forward_model(vis_obs_batch, vec_obs_batch, t)
                 # Forward the expert model to retrieve the policy (making decisions)
-                expert_policy = self.forward_expert(self.vis_obs, self.vec_obs, t)      
+                if self.use_expert:
+                    expert_policy = self.forward_expert(self.vis_obs, self.vec_obs, t)      
 
                 # Sample actions from each individual policy branch
                 actions = []
@@ -102,6 +104,8 @@ class TrajectorySampler():
                 self.buffer.actions[:, t] = torch.stack(actions, dim=1)
                 self.buffer.log_probs[:, t] = torch.stack(log_probs, dim=1)
                 self.buffer.values[:, t] = value.data
+                if value_expert is not None:
+                    self.buffer.values_expert[:, t] = value_expert.data
 
             # Execute actions
             actions = self.buffer.actions[:, t].cpu().numpy() # send actions as batch to the CPU, to save IO time
@@ -122,11 +126,12 @@ class TrajectorySampler():
                 else:
                     # Increment worker timestep
                     self.worker_current_episode_step[w] +=1
-                    
-            # Create expert reward
-            expert_reward = self.generate_expert_reward(policy, expert_policy, self.buffer.actions[:, t])
-            # Add expert reward to the environment reward
-            self.buffer.expert_rewards[:, t] = expert_reward
+            
+            if self.use_expert:
+                # Create expert reward
+                expert_reward = self.generate_expert_reward(policy, expert_policy, self.buffer.actions[:, t])
+                # Add expert reward to the environment reward
+                self.buffer.expert_rewards[:, t] = expert_reward
 
         return episode_infos
 
@@ -150,10 +155,10 @@ class TrajectorySampler():
             t {int} -- Current step of sampling
 
         Returns:
-            {tuple} -- policy {list of categorical distributions}, value {torch.tensor}
+            {tuple} -- policy {list of categorical distributions}, values of environment and {torch.tensor}
         """
-        policy, value, _, _ = self.model(vis_obs, vec_obs)
-        return policy, value
+        policy, value, value_expert, _, _ = self.model(vis_obs, vec_obs)
+        return policy, value, value_expert
     
     def forward_expert(self, vis_obs, vec_obs, t):
         """ Forwards the expert model to retrieve the policy of the to be fed observations.
@@ -235,12 +240,12 @@ class TrajectorySampler():
         """Returns the last value of the current observation to compute GAE.
 
         Returns:
-            {torch.tensor} -- Last value
+            {tuple} -- Last value of the environment and the expert model 
         """
-        _, last_value, _, _ = self.model(torch.tensor(self.vis_obs) if self.vis_obs is not None else None,
+        _, last_value, last_expert_value, _, _ = self.model(torch.tensor(self.vis_obs) if self.vis_obs is not None else None,
                                         torch.tensor(self.vec_obs) if self.vec_obs is not None else None,
                                         None)
-        return last_value
+        return last_value, last_expert_value
 
     def close(self) -> None:
         """Closes the sampler and shuts down its environment workers."""
