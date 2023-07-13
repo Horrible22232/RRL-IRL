@@ -115,8 +115,10 @@ def create_expert_policy(config, visual_observation_space, vector_observation_sp
         {torch.model} -- Expert policy
     """
 
+    # Check if expert configuration is available and if not, return None to indicate that no expert is available
     if "expert" not in config:
         return None
+    # Create the expert policy based on the configuration
     if config["expert"]["env_type"] == "Crafter" and config["expert"]["model"] == "DreamerV3":
         # Importing here to make sure that the dependencies are only loaded if necessary
         from neroRRL.expert.dreamerv3_wrapper import DreamerV3Wrapper
