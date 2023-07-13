@@ -44,8 +44,6 @@ class Buffer():
         self.dones = np.zeros((self.num_workers, self.worker_steps), dtype=bool)
         self.log_probs = torch.zeros((self.num_workers, self.worker_steps, len(self.action_space_shape)))
         self.values = torch.zeros((self.num_workers, self.worker_steps))
-        self.env_advantages = torch.zeros((self.num_workers, self.worker_steps))
-        self.expert_advantages = torch.zeros((self.num_workers, self.worker_steps))
 
     def init_recurrent_buffer_fields(self):
         """Initializes the buffer fields and members that are needed for training recurrent policies."""
@@ -83,18 +81,31 @@ class Buffer():
         self.memory_indices = torch.zeros((self.num_workers, self.worker_steps, self.memory_length), dtype=torch.long)
 
 
-    def calc_env_advantages(self, last_value, gamma, lamda):
+    def _calc_advantages(self, last_value, gamma, lamda, rewards):
+        """Generalized advantage estimation (GAE) based on given rewards and values.
+
+        Arguments:
+            last_value {numpy.ndarray} -- Value of the last agent's state
+            gamma {float} -- Discount factor
+            lamda {float} -- GAE regularization parameter
+            rewards {numpy.ndarray} -- Rewards
+        
+        Returns:
+            {torch.tensor} -- Calculated advantages
+        """
+        advantages = torch.zeros((self.num_workers, self.worker_steps))
         with torch.no_grad():
             last_advantage = 0
             mask = torch.tensor(self.dones).logical_not() # mask values on terminal states
-            rewards = torch.tensor(self.env_rewards)
+            rewards = torch.tensor(rewards)
             for t in reversed(range(self.worker_steps)):
                 last_value = last_value * mask[:, t]
                 last_advantage = last_advantage * mask[:, t]
                 delta = rewards[:, t] + gamma * last_value - self.values[:, t]
                 last_advantage = delta + gamma * lamda * last_advantage
-                self.env_advantages[:, t] = last_advantage
+                advantages[:, t] = last_advantage
                 last_value = self.values[:, t]
+        return advantages
 
     def calc_expert_advantages(self, last_value, gamma, lamda):
         with torch.no_grad():
@@ -106,7 +117,7 @@ class Buffer():
                 last_advantage = last_advantage * mask[:, t]
                 delta = rewards[:, t] + gamma * last_value - self.values[:, t]
                 last_advantage = delta + gamma * lamda * last_advantage
-                self.env_advantages[:, t] = last_advantage
+                self.expert_advantages[:, t] = last_advantage
                 last_value = self.values[:, t]
 
     def calc_advantages(self, last_value, gamma, lamda):
@@ -118,11 +129,11 @@ class Buffer():
             lamda {float} -- GAE regularization parameter
         """
         # Calculate environment advantages
-        self.calc_env_advantages(last_value, gamma, lamda)
+        env_advatages = self._calc_advantages(last_value, gamma, lamda, self.env_rewards)
         # Calculate expert advantages
-        self.calc_expert_advantages(last_value, gamma, lamda)
+        expert_advantages = self._calc_advantages(last_value, gamma, lamda, self.expert_rewards)
         # Combine both advantages
-        self.advantages = self.env_advantages + self.expert_advantages
+        self.advantages = env_advantages + expert_advantages
 
     def prepare_batch_dict(self):
         """
