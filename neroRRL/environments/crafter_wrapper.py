@@ -13,7 +13,7 @@ from neroRRL.expert.modules.dreamerv3.embodied.envs import from_gym
 
 class CrafterWrapper(Env):
     """
-    This class wraps the crafter environment.
+    This class wraps the crafter environment based on the dreamerV3 code to make it compatibel with the expert.
         https://github.com/danijar/crafter
     """
     def __init__(self, expert_params = None, reset_params = None, realtime_mode = False, record_trajectory = False, expert = None) -> None:
@@ -29,16 +29,13 @@ class CrafterWrapper(Env):
             self._default_reset_params = {"start-seed": 0, "num-seeds": 100}
         else:
             self._default_reset_params = reset_params
-            
-        # Set the expert
-        self._expert = expert
 
         # render_mode = None if not realtime_mode else "debug_rgb_array"
         
         # self._env = gym.make(env_name, disable_env_checker = True, render_mode = render_mode)
         
         # Use the dreamerv3 config to make sure that the environment is compatible with the dreamerv3 agent
-        config_path = './model/expert/crafter/config.yaml' if expert_params is None else expert_params["config_path"]
+        config_path = './model/expert/crafter/config.yaml'
         config_path = Path(config_path)
         self.config = embodied.Config.load(config_path)
         
@@ -58,16 +55,6 @@ class CrafterWrapper(Env):
         
         self.num_actions = self._env.act_space['action'].shape[0] 
         self.one_hot_actions = np.eye(self.num_actions)
-            
-    @property
-    def _has_expert(self):
-        """Returns whether the environment has an expert."""
-        return self._expert is not None
-    
-    @property
-    def _expert_policy(self):
-        """Returns the expert policy."""
-        return self._expert
         
     @property
     def unwrapped(self):
@@ -143,10 +130,6 @@ class CrafterWrapper(Env):
         vis_obs = env_data['image'] / 255.0
         # Track rewards of an entire episode
         self._rewards = []
-        # To track the policy of the expert for generating the expert reward
-        if self._has_expert:
-            self._state = None
-            # self._forward_expert(env_data)
 
         if self._realtime_mode:
             self._env.render()
@@ -158,20 +141,6 @@ class CrafterWrapper(Env):
         } if self._record else None
 
         return vis_obs, None
-
-    def _forward_expert(self, env_data):
-        """Forwards the expert policy to generate the policy of the expert.
-
-        Arguments:
-            env_data {dict}: The environment data
-        """
-        env_data = {k: v[None] if isinstance(v, (list, dict)) else np.array([v]) for k, v in env_data.items()}
-        self._policy, self._state = self._expert(env_data, self._state)
-
-    @property
-    def _expert_policy_state(self):
-        """Returns the expert policy state."""
-        return self._policy
 
     def step(self, action):
         """Runs one timestep of the environment's dynamics.
@@ -193,17 +162,9 @@ class CrafterWrapper(Env):
         # Execute action in the environment
         env_data = self._env.step(act)
         # Retrieve visual observation, reward, and done flag from the environment data
-        vis_obs, env_reward, done, info = env_data['image'] / 255.0, env_data['reward'], env_data['is_last'], {}
-        # Generate expert reward
-        #expert_reward = self._expert_reward(action[0]) if self._has_expert else 0.0
-        # Set reward
-        #reward = env_reward + expert_reward
-        # To track the policy of the expert for generating the expert reward
+        vis_obs, reward, done, info = env_data['image'] / 255.0, env_data['reward'], env_data['is_last'], {}
 
-        #if self._has_expert:
-        #    self._forward_expert(env_data)
-        # Track rewards of an entire episode
-        self._rewards.append(env_reward)
+        self._rewards.append(reward)
         
         if self._realtime_mode or self._record:
             img = self._env.render()
@@ -219,10 +180,10 @@ class CrafterWrapper(Env):
         if self._record:
             self._trajectory["vis_obs"].append(env_data['image'])
             self._trajectory["vec_obs"].append(None)
-            self._trajectory["rewards"].append(env_reward)
+            self._trajectory["rewards"].append(reward)
             self._trajectory["actions"].append([action])
 
-        return vis_obs, None, env_reward, done, info
+        return vis_obs, None, reward, done, info
 
     def close(self):
         """Shuts down the environment."""

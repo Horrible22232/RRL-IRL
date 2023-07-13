@@ -9,12 +9,13 @@ environment:
   reset_params:
     start-seed: 0
     num-seeds: 100
-  expert:
-    model: "DreamerV3"
-    config_path: "./model/expert/crafter/config.yaml"
-    model_path: "./model/expert/crafter/checkpoint.ckpt"
-    reward_type: "jsd"
-    device: "cuda"
+    
+expert:
+  model: "DreamerV3"
+  config_path: "./model/expert/crafter/config.yaml"
+  model_path: "./model/expert/crafter/checkpoint.ckpt"
+  reward_type: "jsd"
+  device: "cuda"
 
 model:
   load_model: False

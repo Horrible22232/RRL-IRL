@@ -26,9 +26,9 @@ class TrajectorySampler():
         self.visual_observation_space = visual_observation_space
         self.vector_observation_space = vector_observation_space
         self.model = model
-        self.expert = create_expert_policy(configs["environment"], visual_observation_space, vector_observation_space, action_space_shape)
-        self.expert_model_name = configs["environment"]["expert"]["model"] if "expert" in configs["environment"] else ""
-        self.expert_reward_type = configs["environment"]["expert"]["reward_type"] if "expert" in configs["environment"] else ""
+        self.expert = create_expert_policy(configs, visual_observation_space, vector_observation_space, action_space_shape)
+        self.expert_model_name = configs["expert"]["model"] if "expert" in configs else ""
+        self.expert_reward_type = configs["expert"]["reward_type"] if "expert" in configs else ""
         self.expert_state = None
         self.n_workers = configs["sampler"]["n_workers"]
         self.worker_steps = configs["sampler"]["worker_steps"]
@@ -40,7 +40,7 @@ class TrajectorySampler():
                         action_space_shape, self.train_device, self.model.share_parameters, self)
 
         # Launch workers
-        self.workers = [Worker(configs["environment"], worker_id + 200 + w, expert=self.expert) for w in range(self.n_workers)]#
+        self.workers = [Worker(configs["environment"], worker_id + 200 + w) for w in range(self.n_workers)]
         # Launch worker list
         # self.worker_list = WorkerList(worker_id, configs["environment"], self.n_workers, self.expert)
         # Setup timestep placeholder
