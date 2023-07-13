@@ -107,6 +107,9 @@ def create_expert_policy(config, visual_observation_space, vector_observation_sp
 
     Arguments:
         config {dict} -- Environment expert configuration
+        visual_observation_space {gym.spaces} -- Visual observation space of the environment (Currently not used)
+        vector_observation_space {gym.spaces} -- Vector observation space of the environment (Currently not used)
+        action_space {gym.spaces} -- Action space of the environment (Currently not used)
         
     Returns:
         {torch.model} -- Expert policy
@@ -114,14 +117,17 @@ def create_expert_policy(config, visual_observation_space, vector_observation_sp
 
     if "expert" not in config:
         return None
-    if config["type"] == "Crafter" and config["expert"]["model"] == "DreamerV3":
+    if config["expert"]["env_type"] == "Crafter" and config["expert"]["model"] == "DreamerV3":
+        # Importing here to make sure that the dependencies are only loaded if necessary
         from neroRRL.expert.dreamerv3_wrapper import DreamerV3Wrapper
         from neroRRL.expert.modules.dreamerv3.embodied.envs import from_gym
         from neroRRL.expert.modules.dreamerv3.embodied.core import Checkpoint
         from neroRRL.expert.modules import dreamerv3
         from neroRRL.expert.modules.dreamerv3 import embodied
         import crafter
+        # Create a dummy environment to obtain the observation and action space
         env = crafter.Env() 
         env = from_gym.FromGym(env)
         env = dreamerv3.wrap_env(env, embodied.Config.load(config["expert"]["config_path"]))
+        # Return the expert policy
         return DreamerV3Wrapper(config["expert"]["config_path"], config["expert"]["model_path"],  env.obs_space, env.act_space, torch.device(config["expert"]["device"]))
