@@ -1,5 +1,5 @@
 import torch
-from neroRRL.environments.wrappers.expert_rewards.expert_rewards import *
+from neroRRL.environments.expert_rewards.expert_rewards import *
 
 def test_jsd_reward():
     """Test the jsd_reward function

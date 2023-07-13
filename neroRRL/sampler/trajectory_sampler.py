@@ -4,7 +4,7 @@ import torch
 from neroRRL.sampler.buffer import Buffer
 from neroRRL.utils.worker import Worker, WorkerList
 from neroRRL.utils.utils import create_expert_policy
-from neroRRL.environments.wrappers.expert_rewards.expert_rewards import *
+from neroRRL.environments.expert_rewards.expert_rewards import *
 
 class TrajectorySampler():
     """The TrajectorySampler employs n environment workers to sample data for s worker steps regardless if an episode ended.

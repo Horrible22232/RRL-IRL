@@ -16,3 +16,4 @@ csharp_timers.json
 test.py
 neroRRL/test.py
 *.ckpt
+/conda/

@@ -8,7 +8,6 @@ from neroRRL.environments.wrappers.pytorch_shape import PyTorchEnv
 from neroRRL.environments.wrappers.last_action_to_obs import LastActionToObs
 from neroRRL.environments.wrappers.last_reward_to_obs import LastRewardToObs
 from neroRRL.environments.wrappers.reward_normalization import RewardNormalizer
-from neroRRL.environments.wrappers.expert_rewards.crafter_dreamerv3.inv_kl_div import KLInverseReward
 
 def wrap_environment(config, worker_id, realtime_mode = False, record_trajectory = False):
     """This function instantiates an environment and applies wrappers based on the specified config.
