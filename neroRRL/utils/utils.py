@@ -67,8 +67,7 @@ def get_environment_specs(env_config, worker_id, realtime_mode = False):
     Returns:
         {tuple} -- Returns visual observation space, vector observations space, action space and max episode steps
     """
-    expert = create_expert_policy(env_config, None, None, None)
-    dummy_env = wrap_environment(env_config, worker_id, realtime_mode, expert = expert)
+    dummy_env = wrap_environment(env_config, worker_id, realtime_mode)
     vis_obs, vec_obs = dummy_env.reset(env_config["reset_params"])
     max_episode_steps = dummy_env.max_episode_steps
     visual_observation_space = dummy_env.visual_observation_space
