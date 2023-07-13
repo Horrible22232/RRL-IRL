@@ -169,9 +169,12 @@ class TrajectorySampler():
         expert_policy = None
         if self.expert_model_name == "DreamerV3":
             # Transform visual observations to the correct shape for the expert model
+            # You need to copy the visual observation else you can't resize it
             image = vis_obs.copy()
+            # Resize the image to the correct shape for the expert model
             image = np.resize(image, (self.n_workers, 3, 64, 64))
-            image= image.transpose((0, 2, 3, 1))
+            # Transpose the image to the correct shape for the expert model
+            image = image.transpose((0, 2, 3, 1))
             # Create the expert model's input
             obs = {"image": image, "reward": self.buffer.env_rewards[:, t], "is_last": self.buffer.dones[:, t], "is_terminal": self.buffer.dones[:, t]}
             obs["is_first"] = np.zeros((self.n_workers, ), dtype=np.bool)
@@ -185,11 +188,23 @@ class TrajectorySampler():
         return expert_policy
     
     def generate_expert_reward(self, policy, expert_policy, actions):
+        """Generates the expert reward based on the expert model's policy and the agent's policy.
+
+        Arguments:
+            policy {list of categorical distributions}: The agent's policy
+            expert_policy {torch.distribution}: The expert model's policy
+            actions {torch.tensor}: The agent's actions
+
+        Returns:
+            {float}: The expert reward
+        """
         expert_reward = 0
+        # Calculate the expert reward based on the expert model's policy and the agent's policy
         if self.expert_model_name == "DreamerV3":
+            # Generate an expert Jensen-Shannon-Divergence (JSD) reward if selected
             if self.expert_reward_type == "jsd":
                 return jsd_reward(policy, expert_policy, actions)
-
+        # Return the expert reward
         return expert_reward
 
     def reset_worker(self, worker, id, t):
