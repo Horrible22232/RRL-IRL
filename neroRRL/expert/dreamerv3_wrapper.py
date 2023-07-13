@@ -76,18 +76,21 @@ class DreamerV3Wrapper:
 
 
 def test():
+    """Tests the DreamerV3Wrapper class.
+    """
+    # Set the used necessary path variables for the model and environment
     base_path = "./model/expert/crafter/"
     config_path = Path(base_path + 'config.yaml')
     model_path = Path(base_path + 'checkpoint.ckpt')
-
+    # Load the config
     config = embodied.Config.load(config_path)
-
+    # Create the environment and wrap with the dreamerv3 wrapper
     env = crafter.Env() 
     env = from_gym.FromGym(env)
     env = dreamerv3.wrap_env(env, config)
-
+    # Create the agent
     agent = DreamerV3Wrapper(config_path, model_path, env.obs_space, env.act_space, torch.device("cpu"))
-
+    # Create the initial state and action
     state = None
     act = {'action': env.act_space['action'].sample(), 'reset': np.array(True)}
     done, rewards, iter = False, [], 0
