@@ -129,7 +129,7 @@ class Buffer():
             lamda {float} -- GAE regularization parameter
         """
         # Calculate environment advantages
-        env_advatages = self._calc_advantages(last_value, gamma, lamda, self.env_rewards)
+        env_advantages = self._calc_advantages(last_value, gamma, lamda, self.env_rewards)
         # Calculate expert advantages
         expert_advantages = self._calc_advantages(last_value, gamma, lamda, self.expert_rewards)
         # Combine both advantages
