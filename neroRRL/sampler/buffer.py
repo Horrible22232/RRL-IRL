@@ -129,7 +129,6 @@ class Buffer():
             lamda {float} -- GAE regularization parameter
         """
         # Check if the model has one value head
-        print(self.configs.keys())
         if self.configs["model"]["value_head"] == "default":
             # Check if expert rewards are used else just use the environment rewards
             if "expert" in self.configs:

@@ -9,6 +9,7 @@ environment:
   reset_params:
     start-seed: 0
     num-seeds: 100
+  env_rewards: True # Whether the environment rewards are or not
 
 expert:
   env_type: "Crafter"
