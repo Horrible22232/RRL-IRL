@@ -128,12 +128,17 @@ class Buffer():
             gamma {float} -- Discount factor
             lamda {float} -- GAE regularization parameter
         """
-        # Calculate environment advantages
-        env_advantages = self._calc_advantages(last_value, gamma, lamda, self.env_rewards)
-        # Calculate expert advantages
-        expert_advantages = self._calc_advantages(last_value, gamma, lamda, self.expert_rewards)
-        # Combine both advantages
-        self.advantages = env_advantages + expert_advantages
+        # Check if the model has one value head
+        print(self.configs.keys())
+        if self.configs["model"]["value_head"] == "default":
+            # Check if expert rewards are used else just use the environment rewards
+            if "expert" in self.configs:
+                rewards = self.env_rewards + self.expert_rewards
+            else:
+                rewards = self.env_rewards
+                
+        # Calculate advantages
+        self.advantages = self._calc_advantages(last_value, gamma, lamda, rewards)
 
     def prepare_batch_dict(self):
         """

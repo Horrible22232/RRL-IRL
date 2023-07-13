@@ -37,6 +37,7 @@ model:
     hidden_state_init: "zero"
     reset_hidden_state: False
     residual: False
+  value_head: "default" # "default" means one value head is used, "multi" means multiple value heads are used for each reward type
 
 evaluation:
   evaluate: False
